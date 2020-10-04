@@ -1,10 +1,4 @@
-Application Programming Interface API 
+Aplicación API para obtener el clima países que yacen en una lista de datos. 
+Proyecto 01 de Modelado y Programación. 
 
-API de la aplicación movil de COVID que maneja las peticiones de la aplicación al servidor. 
-
-Contiene los endpoints para manejar información de usuarios
-
-endpoints para conectar a los usuarios 
-
-endpoints para transmitir y obtener infromación general del sistema y de otras APIS de COVID. 
-
+API resources. 
