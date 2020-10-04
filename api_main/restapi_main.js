@@ -19,8 +19,8 @@ require('dotenv').config();
 // Puerto en el que el servidor trabajará
 const REST_API_PORT = 3000;
 
-// Endpoint de subir csv 
-app.post("/subirCSV", Endpoints.weatherEndpoint);
+// Endpoint de subir csv
+app.post("/subirNombreCSV", Endpoints.weatherEndpoint);
 
 
 // Aquí estamos creando al servidor
