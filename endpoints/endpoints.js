@@ -4,6 +4,10 @@ const csv = require('csv-parser');
 // Importar la función que utilizaremos para obtener los climas
 const Algorithms = require('../core/algorithms');
 
+// Importamos el json de las claves ISO para aeorpuertos en méxico
+const claves = require('../resources/ClavesAeropuertosMexGeneralizadas.js');
+const clavesIATAmex = claves.clavesIATAmex;
+
 // Este el el archivo que contiene los endpoints
 const weatherEndpoint = async(req, res)=>{
 
@@ -37,8 +41,10 @@ const weatherEndpoint = async(req, res)=>{
               ticket["longitude"] = row.destination_longitude;
             }
             var key = '';
-            if(row.destination && isAlpha(row.destination)){
-              key = row.destination;
+            if(row.destination && isAlpha(row.destination) && (row.destination in clavesIATAmex)){
+              // Vamos a ver si esa clave está en nuestro json de claves IATA o no
+              // Si no está la IATA en nuestro json, asumimos que no la conocemos; porque no está en la base de iatas para méxico que trabajamos. Por lo que utilizaremos las coordenadas para hacer la petición e intentar obtener una respuesta.
+              key = clavesIATAmex[row.destination];
             }else{
               key = (row.destination_latitude + row.destination_longitude);
             }
@@ -82,7 +88,8 @@ const weatherEndpoint = async(req, res)=>{
             //-------------------------------------------------
             // Mandamos a llamar a un método que concatene climas con boletos (respuesta)
             //-------------------------------------------------
-
+            // Si tenemos un ticket cuyo destino (clave) no está en las clavesIATAmex, entonces concatenamos su latitude+longitude y usamos ese como clave para obtener el resultado
+            // Para obtener la respuesta, tomamos clavesIATAmex[destintation] y la utilizamos como llave para obtener la respuesta
             res.status(201).send(unique_tickets);
   });
   return;
