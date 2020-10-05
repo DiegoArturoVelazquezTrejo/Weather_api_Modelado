@@ -8,6 +8,11 @@ const Algorithms = require('../core/algorithms');
 const claves = require('../resources/ClavesAeropuertosMexGeneralizadas.js');
 const clavesIATAmex = claves.clavesIATAmex;
 
+// Obtenemos la función de isAlpha
+const functions = require('../core/auxiliar_algorithms.js');
+const isAlpha = functions.isAlpha;
+const normalizar = functions.normalizar;
+
 // Este el el archivo que contiene los endpoints
 const weatherEndpoint = async(req, res)=>{
 
@@ -60,7 +65,7 @@ const weatherEndpoint = async(req, res)=>{
       else if(row.destino && isAlpha(row.destino)){
       // CASO BASE DE DATOS 2 (destino	salida	llegada	fecha de salida)
             // String del destino para que sea la clave
-            var key = row.destino;
+            var key = normalizar(row.destino);
             // Agregar a un diccionario (si se se repite, no se agrega) VALORES ÚNICOS (((Considerar 2 posibles tipos database)))
             if(!(key in unique_tickets)){
               unique_tickets[key] = key;
@@ -94,11 +99,6 @@ const weatherEndpoint = async(req, res)=>{
   });
   return;
 };
-
-// Función para verificar que las claves de las ciudades tengan únicamente caracteres alfabéticos
-var isAlpha = function(ch){
-  return (ch.match(/[0-9]/) == null);
-}
 
 // Exportar la función
 module.exports.weatherEndpoint = weatherEndpoint;
