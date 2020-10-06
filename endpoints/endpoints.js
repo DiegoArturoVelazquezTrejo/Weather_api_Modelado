@@ -30,7 +30,7 @@ const weatherEndpoint = async(req, res)=>{
   const error_tickets = [];
 
   // Leemos los datos
-  fs.createReadStream('./resources/datosModelado.csv').pipe(csv())
+  fs.createReadStream('./resources/datosModelado1.csv').pipe(csv())
     .on('data', (row) => {
       // Vamos a ver que tipo de base de datos nos están pasando (Tipo 1 y Tipo 2)
 

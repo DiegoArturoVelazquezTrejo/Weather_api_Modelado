@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 require('dotenv').config();
 
 // Puerto en el que el servidor trabajará
-const REST_API_PORT = 3000;
+const REST_API_PORT = 2727;
 
 // Endpoint de subir csv
 app.post("/subirNombreCSV", Endpoints.weatherEndpoint);

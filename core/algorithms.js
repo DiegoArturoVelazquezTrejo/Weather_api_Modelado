@@ -25,10 +25,12 @@ const get_weather_status = async(info_tickets) =>{
     data_to_be_resolved = info_tickets
   }else{
     // Vamos a particionar los datos y a conectarnos a microservidores para tratar paralelamente las peticiones
-    var division = Math.ceil(Object.keys(info_tickets).length/3);
+    var division = Math.ceil(Object.keys(info_tickets).length/5);
     var partition_1 = {};
     var partition_2 = {};
     var partition_3 = {};
+    var partition_4 = {};
+    var partition_5 = {};
     let contador = 0;
     for(var key in info_tickets){
       if(contador < division){
@@ -40,15 +42,22 @@ const get_weather_status = async(info_tickets) =>{
       if(contador >= division*2 && contador < division*3){
         partition_3[key] = info_tickets[key];
       }
+      if(contador >= division*3 && contador < division*4){
+        partition_4[key] = info_tickets[key];
+      }
+      if(contador >= division*4 && contador <= division*5){
+        partition_5[key] = info_tickets[key];
+      }
       contador++;
     }
     data_to_be_resolved = partition_1; // La que nosotros trabajaremos
   }
-  // Conexión con los dos microservidores
+  //----------------------------------------------------------
+  // Conexión a nuestros microservidores para analizar las particiones restantes
+  // ejemplo: const res = fetch('https://microservidora.herokuapp.com/saludo').then((response) => response.json()).then((json) => console.log(json));
+  
 
   //----------------------------------------------------------
-
-
   // Vamos a sub-particionar la partición que nosotros trabajaremos data_to_be_resolved
   // Necesitamos que cada partición del data_to_be_resolved tenga exactamente 60/#Cpus para que así, la suma de peticiones que hagan los hilos de 59
 
@@ -99,7 +108,7 @@ const get_weather_status = async(info_tickets) =>{
     difference = (end - beginig);
     // Esperamos el tiempo restante para juntar 1 minuto de peticiones a la API
     if(partitions_array.length>1 && i < partitions_array.length-1)
-      await sleep(65000 - difference);  // HACER LA PREGUNTA DE QUE SI ESE SLEEP ES PARA TODO EL PROGRAMA O PARA EL HILO EN EL QUE SE ESTÁ TRABAJANDO
+      await sleep(63000 - difference);  // HACER LA PREGUNTA DE QUE SI ESE SLEEP ES PARA TODO EL PROGRAMA O PARA EL HILO EN EL QUE SE ESTÁ TRABAJANDO
 
     // Agregamos el resultado a la lista de promesas
     result_promises.push(partition_results)
@@ -116,7 +125,7 @@ const get_weather_status = async(info_tickets) =>{
   return Promise.all(result_promises).then(results => {
     // Concatenar todos los resultados de todas las promesas
     console.log("-----------------------------------------------------------");
-    console.log(results);
+    //console.log(results);
     console.log("-----------------------------------------------------------");
   });
 }
