@@ -15,7 +15,6 @@ const sleep = functions.sleep;
 
 require('events').EventEmitter.defaultMaxListeners = 15;
 
-
 // Esta es la función que regresará el diccionario con los climas
 const get_weather_status = async(info_tickets) =>{
 
@@ -55,6 +54,7 @@ const get_weather_status = async(info_tickets) =>{
   //----------------------------------------------------------
   // Conexión a nuestros microservidores para analizar las particiones restantes
   // ejemplo: const res = fetch('https://microservidora.herokuapp.com/saludo').then((response) => response.json()).then((json) => console.log(json));
+
   const promise_result_partition2 = fetch('http://localhost:3030/enviarInformacion',{
         method: 'POST',
         headers: {
@@ -66,31 +66,11 @@ const get_weather_status = async(info_tickets) =>{
     }).then(function(response) {
         return response.json();
     })
-    .then(function(data) {
-        console.log('data = ', data);
-    })
     .catch(function(err) {
-        console.error(err);
-    });
-  /**
-  const promise_result_partition3 = fetch('https://microservidorc.herokuapp.com/enviarInformacion',{
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(partition_3),
-        cache: 'no-cache',
-        timeout: 200000
-    }).then(function(response) {
-        return response.json();
-    })
-    .then(function(data) {
-        console.log('data = ', data);
-    })
-    .catch(function(err) {
-        console.error(err);
-    });
-  **/
+      console.log(err)
+  });
+
+
   //----------------------------------------------------------
   // Vamos a sub-particionar la partición que nosotros trabajaremos data_to_be_resolved
   // Necesitamos que cada partición del data_to_be_resolved tenga exactamente 60/#Cpus para que así, la suma de peticiones que hagan los hilos de 59
@@ -132,7 +112,7 @@ const get_weather_status = async(info_tickets) =>{
   // Arreglo de promesas que contenga todos los resultados de todos los hilos de todas las peticiones de todas las particiones
   var result_promises = [];
 
-  /**
+
   for(var i = 0; i < partitions_array.length; i++){
     // sub sub partición que la información que cada hilo va a procesar
     segments = partition_data(partitions_array[i]);
@@ -149,13 +129,11 @@ const get_weather_status = async(info_tickets) =>{
     // Agregamos el resultado a la lista de promesas
     result_promises.push(partition_results)
   }
-  **/
 
   console.log("Proceso finalizado...");
   var endi = Date.now();
   diffinal = (endi - beg)/1000;
   console.log("El sistemá tardó:   " +diffinal+ "   segundos en realizar las peticiones. ");
-
 
   // Nos falta unirlas con las respuestas de los dos microservidores
 
@@ -168,18 +146,8 @@ const get_weather_status = async(info_tickets) =>{
         json_result[key] = results[i][key];
       }
     }
-    console.log(json_result);
     return json_result;
   });
 }
 
 module.exports.get_weather_status = get_weather_status;
-
-/**
-  Observaciones:
-
-  Necesitamos que fetch se pueda esperar al menos 4 minutos por la respuesta de la API y no mandar el error de reason: socket hang up
-  Una vez hecho eso, agregamos a result_promises los las variables que hacen referencia al fetch de las APIS
-  regresamos los datos en json
-
-**/
