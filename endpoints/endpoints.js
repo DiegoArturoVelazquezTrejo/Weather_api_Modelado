@@ -17,10 +17,10 @@ const normalizar = functions.normalizar;
 const weatherEndpoint = async(req, res)=>{
 
   // Verificar que los parámetros sean los que necesitamos
-  if(!req.body.csv){
-    res.status(404).send("Bad Request");
-    return;
-  }
+  //if(!req.body.csv){
+  //  res.status(404).send("Bad Request");
+  //  return;
+  //}
   // Declaramos las estructuras de datos
   const unique_tickets = {};
   const tickets = [];
@@ -75,7 +75,7 @@ const weatherEndpoint = async(req, res)=>{
             // Aumentamos el contador
             counter++;
       }else{
-        console.log("Se produjo un error de lectura de la base de datos");
+        console.log("Error leyendo: "+JSON.stringify(row));
         // Esto significa que se encontró un boleto con información equivocada
         error_tickets.push(counter); // Para decirle al usuario "Tu boleto en esta posición # está mal, o tu boleto número # está mal"
         counter++;
@@ -95,7 +95,7 @@ const weatherEndpoint = async(req, res)=>{
             //-------------------------------------------------
             // Si tenemos un ticket cuyo destino (clave) no está en las clavesIATAmex, entonces concatenamos su latitude+longitude y usamos ese como clave para obtener el resultado
             // Para obtener la respuesta, tomamos clavesIATAmex[destintation] y la utilizamos como llave para obtener la respuesta
-            res.status(201).send(unique_tickets);
+            res.status(201).send(weather_values);
   });
   return;
 };

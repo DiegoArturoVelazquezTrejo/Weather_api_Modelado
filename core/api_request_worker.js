@@ -19,7 +19,7 @@ const requestData = async function(request){
     // 1. Tenemos que ver si la clave cumple con isAlpha, si es así, hacemos la petición con ella
     try{
         if(isAlpha(key)){
-          url_city = `http://api.openweathermap.org/data/2.5/weather?q=${key}&appid=3135e334d6fbed99649f285eb30e30aa`;
+          url_city = `http://api.openweathermap.org/data/2.5/weather?q=${key}&appid=fec892376df39b2064d70908b233664f`;
           // Respuestas de la API
           var respuesta = await fetch (url_city)
           response = await respuesta.json();
@@ -27,7 +27,7 @@ const requestData = async function(request){
           if(response === undefined){
             var longitude = parseFloat(request[key].longitude)/10;
             var latitude = parseFloat(request[key].latitude)/10;
-            url_coord = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=3135e334d6fbed99649f285eb30e30aa`;
+            url_coord = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=fec892376df39b2064d70908b233664f`;
             // Respuestas de la API
             respuesta = await fetch (url_coord);
             response = await respuesta.json();
@@ -37,7 +37,7 @@ const requestData = async function(request){
         }else{
           var longitude = parseFloat(request[key].longitude)/10;
           var latitude = parseFloat(request[key].latitude)/10;
-          url_coord = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=3135e334d6fbed99649f285eb30e30aa`;
+          url_coord = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=fec892376df39b2064d70908b233664f`;
           // Respuestas de la API
           var respuesta = await fetch (url_coord);
           response = await respuesta.json();
