@@ -10,22 +10,18 @@ const isAlpha = functions.isAlpha;
 
 const requestData = async function(params){
   // Conectamos a la api, conseguimos las peticiones y esas peticiones se guardarán en result
-  const promise = await fetch(params.server,{
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(params.data),
-        cache: 'no-cache',
-        timeout: 200000
-    }).then(function(response) {
-        // Regresamos el resultado
-        parentPort.postMessage(response.json());
-        return;
-    })
-    .catch(function(err) {
-      console.log(err); 
-  });
+  try{
+    const res = await fetch(params.server, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params.data)
+    }).then((response) => response.json()).then((json) => parentPort.postMessage(json));
+  }catch(err){
+      console.log("Error fetching data", err);
+  }
 }
 
 // Mandamos a llamar a la función

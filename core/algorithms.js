@@ -20,14 +20,13 @@ const servers = Servers.servers;
 
 // Esta es la función que regresará el diccionario con los climas
 const get_weather_status = async(info_tickets) =>{
-
   // Esto es en el caso que la longitud de info_tickets sea menor a 60
   data_to_be_resolved = [];
   if(Object.keys(info_tickets).length < 60){
     data_to_be_resolved.push(info_tickets);
   }else{
     // Vamos a particionar los datos y a conectarnos a microservidores para tratar paralelamente las peticiones (sabemos que el límite es 1100)
-    var division = Math.ceil(Object.keys(info_tickets).length/2);
+    var division = 550;
     var partition_1 = {};
     var partition_2 = {};
     let contador = 0;
@@ -40,8 +39,12 @@ const get_weather_status = async(info_tickets) =>{
       }
       contador++;
     }
-    data_to_be_resolved.push(partition_1);
-    data_to_be_resolved.push(partition_2);
+    if(Object.keys(partition_1).length > 0){
+      data_to_be_resolved.push(partition_1);
+    }
+    if(Object.keys(partition_2).length > 0){
+      data_to_be_resolved.push(partition_2);
+    }
   }
 
   //----------------------------------------------------------
@@ -53,14 +56,14 @@ const get_weather_status = async(info_tickets) =>{
   var beginig, end, difference;
   // Arreglo de promesas que contenga todos los resultados de todos los hilos de todas las peticiones de todas las particiones
   var result_promises = [];
+  var partition_results;
 
   for(var i = 0; i < data_to_be_resolved.length; i++){
     // sub sub partición que la información que cada hilo va a procesar (cada partición tendrá sus 55 elementos y su dirección de servidor)
     segments = partition_data(data_to_be_resolved[i], servers);
-
     beginig = Date.now();
     // Vamos a trabajar con los workers (hilos)
-    //partition_results = Workers.worker(segments);
+    partition_results = Workers.worker(segments);
     end = Date.now();
     difference = (end - beginig);
     // Esperamos el tiempo restante para juntar 1 minuto de peticiones a la API
@@ -79,10 +82,13 @@ const get_weather_status = async(info_tickets) =>{
     json_result = {};
     // Vamos a iterar sobre los resultados, es una lista con jsons, entonces vamos a concatenar todo a un solo json para enviar ese json como respuesta
     for(var i= 0; i < results.length; i++){
-      for(var key in results[i]){
-        json_result[key] = results[i][key];
+      for(var j = 0; j < results[i].length; j++){
+        for(var key in results[i][j]){
+          json_result[key] = results[i][j][key];
+        }
       }
     }
+    //console.log(json_result);
     return json_result;
   });
 }

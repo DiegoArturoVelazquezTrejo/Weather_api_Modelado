@@ -5,7 +5,6 @@ var express = require('express');
 var app = express();
 
 const bodyParser = require("body-parser");
-const database = require('../database/database.js');
 
 // Importar el archivo con los endpoints
 const Endpoints = require('../endpoints/endpoints');

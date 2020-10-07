@@ -34,7 +34,7 @@ const weatherEndpoint = async(req, res)=>{
   var limit_counter = 0;
 
   // Leemos los datos
-  fs.createReadStream('./resources/datosModelado1.csv').pipe(csv())
+  fs.createReadStream('./resources/datosModelado.csv').pipe(csv())
     .on('data', (row) => {
       // Vamos a ver que tipo de base de datos nos están pasando (Tipo 1 y Tipo 2)
 
@@ -60,6 +60,7 @@ const weatherEndpoint = async(req, res)=>{
             // Agregar a un diccionario (si se se repite, no se agrega) VALORES ÚNICOS (((Considerar 2 posibles tipos database)))
             if(!(key in unique_tickets)){
               unique_tickets[key] = ticket;
+              limit_counter++;
             }
             // Agregar a lista (con todo y repeticiones ) TODOS LOS TICKETS
             tickets.push(row);
@@ -73,6 +74,7 @@ const weatherEndpoint = async(req, res)=>{
             // Agregar a un diccionario (si se se repite, no se agrega) VALORES ÚNICOS (((Considerar 2 posibles tipos database)))
             if(!(key in unique_tickets)){
               unique_tickets[key] = key;
+              limit_counter++;
             }
             // Agregar a lista (con todo y repeticiones ) TODOS LOS TICKETS
             tickets.push(key);
@@ -83,10 +85,7 @@ const weatherEndpoint = async(req, res)=>{
         // Esto significa que se encontró un boleto con información equivocada
         error_tickets.push(counter); // Para decirle al usuario "Tu boleto en esta posición # está mal, o tu boleto número # está mal"
         counter++;
-      }else{
-        console.log("El sistema tiene como límite 1,100 ciudades únicas");
       }
-      limit_counter++;
     })
     .on('end', () => {
             console.log("Tenemos "+Object.keys(unique_tickets).length+" vuelos");
@@ -94,18 +93,31 @@ const weatherEndpoint = async(req, res)=>{
             console.log("Tenemos "+error_tickets.length+" boletos sin destino o sin origen (erróneos)")
             // Llamar método de core para hacer las peticiones a la API de lo que tengamos en el diccionario
             // Observación: unique_tickets ya tiene las claves ÚNICAS dentro de la base de datos. I.E. es nuestro Caché
-            weather_values = Algorithms.get_weather_status(unique_tickets);
+            console.log("--------------------------------------");
+            Algorithms.get_weather_status(unique_tickets).then(weathers => generate_report(weathers, tickets, res));
             // Método para concatenar climas y lugares y generar un JSON que se enviará al usuario
-
-            //-------------------------------------------------
-            // Mandamos a llamar a un método que concatene climas con boletos (respuesta)
+            console.log("--------------------------------------");
             //-------------------------------------------------
             // Si tenemos un ticket cuyo destino (clave) no está en las clavesIATAmex, entonces concatenamos su latitude+longitude y usamos ese como clave para obtener el resultado
-            // Para obtener la respuesta, tomamos clavesIATAmex[destintation] y la utilizamos como llave para obtener la respuesta
-            res.status(201).send(weather_values);
   });
   return;
 };
+
+// Función que realiza el etiquetado  weathers: diccionario con los climas,   tickets: lista con los tickets
+const generate_report = (weathers, tickets, res)=>{
+  var destination = '';
+  for(var i = 0; i < tickets.length; i++){
+    if(tickets[i].origin && (tickets[i].origin in clavesIATAmex)){
+      destination = clavesIATAmex[tickets[i].origin];
+      clima = weathers[destination];
+      console.log("El ticket: "+i+" con destino a "+destination+" encontrará condiciones climáticas => temperatura: "+clima["temp"]+" .humedad: "+clima["humidity"]+" , presión: "+clima["pressure"])
+    }
+  }
+  // Sending the data back
+  res.setHeader('Content-Type', 'application/json');
+  res.status(201).send(weathers);
+}
+
 
 // Exportar la función
 module.exports.weatherEndpoint = weatherEndpoint;
