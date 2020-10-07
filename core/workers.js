@@ -36,4 +36,4 @@ const worker = async function(segments){
   });
 };
 
-module.exports.worker = worker; 
+module.exports.worker = worker;

@@ -8,45 +8,24 @@ const requests = workerData;
 const functions = require('./auxiliar_algorithms.js');
 const isAlpha = functions.isAlpha;
 
-const requestData = async function(request){
-  var response;
-  var url = '';
-  var origin = '';
-  var url_city, url_coord;
-  const result = {};
+const requestData = async function(params){
   // Conectamos a la api, conseguimos las peticiones y esas peticiones se guardarán en result
-  for(var key in request){
-    // 1. Tenemos que ver si la clave cumple con isAlpha, si es así, hacemos la petición con ella
-    try{
-        if(isAlpha(key)){
-          url_city = `http://api.openweathermap.org/data/2.5/weather?q=${key}&appid=fec892376df39b2064d70908b233664f`;
-          // Respuestas de la API
-          var respuesta = await fetch (url_city)
-          response = await respuesta.json();
-          // En caso en que la petición sea undefined porque no se logró con el nombre
-          if(response === undefined){
-            var longitude = parseFloat(request[key].longitude)/10;
-            var latitude = parseFloat(request[key].latitude)/10;
-            url_coord = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=fec892376df39b2064d70908b233664f`;
-            // Respuestas de la API
-            respuesta = await fetch (url_coord);
-            response = await respuesta.json();
-          }
-          // Si la respuesta es NULL, intentamos con las coordenadas
-          result[key] = response.main; // Ya después especificamos que datos queremos de la respuesta de la api
-        }else{
-          var longitude = parseFloat(request[key].longitude)/10;
-          var latitude = parseFloat(request[key].latitude)/10;
-          url_coord = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=fec892376df39b2064d70908b233664f`;
-          // Respuestas de la API
-          var respuesta = await fetch (url_coord);
-          response = await respuesta.json();
-          result[key] = response.main; // Ya después especificamos que datos queremos de la respuesta de la api
-        }
-      }catch(e){console.log("Error requesting data: "+key); }
-  }
-  // Regresamos el resultado
-  parentPort.postMessage(result);
+  const promise = await fetch(params.server,{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params.data),
+        cache: 'no-cache',
+        timeout: 200000
+    }).then(function(response) {
+        // Regresamos el resultado
+        parentPort.postMessage(response.json());
+        return;
+    })
+    .catch(function(err) {
+      console.log(err); 
+  });
 }
 
 // Mandamos a llamar a la función

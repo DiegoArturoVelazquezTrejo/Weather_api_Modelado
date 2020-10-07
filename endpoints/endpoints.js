@@ -29,12 +29,16 @@ const weatherEndpoint = async(req, res)=>{
   // Lista que contiene los números de tickets erróneos
   const error_tickets = [];
 
+  // El sistema analizará únicamente hasta 1,100 peticiones
+  const limit_unique_cities = 1100;
+  var limit_counter = 0;
+
   // Leemos los datos
   fs.createReadStream('./resources/datosModelado1.csv').pipe(csv())
     .on('data', (row) => {
       // Vamos a ver que tipo de base de datos nos están pasando (Tipo 1 y Tipo 2)
 
-      if(((row.origin && isAlpha(row.origin)) || (row.origin_latitude && row.origin_longitude)) && ((row.destination && isAlpha(row.destination)) || (row.destination_latitude && row.destination_longitude))   ){
+      if(((row.origin && isAlpha(row.origin)) || (row.origin_latitude && row.origin_longitude)) && ((row.destination && isAlpha(row.destination)) || (row.destination_latitude && row.destination_longitude))  && (limit_counter < limit_unique_cities) ){
       // CASO BASE DE DATOS 1 (origin	destination	origin_latitude	origin_longitude	destination_latitude	destination_longitude)
             // Obtenemos la información únicamente del destino (porque es lo nos importa)
             ticket = {}
@@ -62,7 +66,7 @@ const weatherEndpoint = async(req, res)=>{
             // Aumentamos el contador
             counter++;
       }
-      else if(row.destino && isAlpha(row.destino)){
+      else if(row.destino && isAlpha(row.destino) && (limit_counter < limit_unique_cities)){
       // CASO BASE DE DATOS 2 (destino	salida	llegada	fecha de salida)
             // String del destino para que sea la clave
             var key = normalizar(row.destino);
@@ -74,12 +78,15 @@ const weatherEndpoint = async(req, res)=>{
             tickets.push(key);
             // Aumentamos el contador
             counter++;
-      }else{
+      }else if(limit_counter < limit_unique_cities){
         console.log("Error leyendo: "+JSON.stringify(row));
         // Esto significa que se encontró un boleto con información equivocada
         error_tickets.push(counter); // Para decirle al usuario "Tu boleto en esta posición # está mal, o tu boleto número # está mal"
         counter++;
+      }else{
+        console.log("El sistema tiene como límite 1,100 ciudades únicas");
       }
+      limit_counter++;
     })
     .on('end', () => {
             console.log("Tenemos "+Object.keys(unique_tickets).length+" vuelos");
