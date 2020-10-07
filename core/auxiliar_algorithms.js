@@ -1,4 +1,6 @@
 // Documento para los algoritmos auxiliares o frecuentemente utilizados
+const converter = require('json-2-csv');
+const fs = require('fs'); 
 
 // Función para verificar que las claves de las ciudades tengan únicamente caracteres alfabéticos
 const isAlpha = function(ch){
@@ -49,7 +51,19 @@ function normalizar(texto) {
     return str.replace(/[^\w\s]/gi, '');
 }
 
+// Función que genera un csv de cuerdo a un json
+function convert_to_csv(lista, nombre_archivo){
+  converter.json2csv(lista, (err, csv) => {
+    if (err) {
+        throw err;
+    }
+    // write CSV to a file
+    fs.writeFileSync(nombre_archivo, csv);
+  });
+}
+
 module.exports.isAlpha = isAlpha;
 module.exports.partition_data = partition_data;
 module.exports.sleep = sleep;
 module.exports.normalizar = normalizar;
+module.exports.convert_to_csv = convert_to_csv;
