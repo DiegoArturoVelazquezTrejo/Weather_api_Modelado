@@ -12,29 +12,55 @@ const clavesIATAmex = claves.clavesIATAmex;
 const functions = require('../core/auxiliar_algorithms.js');
 const isAlpha = functions.isAlpha;
 const normalizar = functions.normalizar;
+const convert_to_csv = functions.convert_to_csv;
+const write_file = functions.write_file;
+const sleep = functions.sleep;
+
+// Arhchivo que contiene la última llamada al servidor
+const file = "./resources/.apicall.txt";
 
 // Este el el archivo que contiene los endpoints
 const weatherEndpoint = async(req, res)=>{
-
+  // Verificamos que se ingrese el nombre del archivo 
+  if(!req.body.csvname){
+    res.status(404).send({status:"Archivo no ingresado"});
+    return;
+  }
+  var data = req.body.csvname + ".csv";
+  // Open a log file
+  if(!fs.existsSync(data)){
+    res.status(404).send({status:"Archivo "+data+" no encontrado"});
+    return;
+  }
+  // Antes de comenzar a analizar un bloque de datos, vamos a ver cuanto tiempo ha pasado desde que se hizo la última petición a los microservidores:
+  fs.readFile(file, 'utf8', async function(err, data) {
+    if (err) {
+      return console.log(err);
+    }
+    var last_call = parseInt(data);
+    if((Date.now() - last_call) < 60000){
+      await sleep(60000 - (Date.now() - last_call));
+    }
+  });
   // Verificar que los parámetros sean los que necesitamos
-  //if(!req.body.csv){
-  //  res.status(404).send("Bad Request");
-  //  return;
-  //}
   // Declaramos las estructuras de datos
   const unique_tickets = {};
   const tickets = [];
   // Contador para identificar los boletos que estén mal
   var counter = 1;
   // Lista que contiene los números de tickets erróneos
-  const error_tickets = [];
+  var error_tickets = 0;
+
+  // El sistema analizará únicamente hasta 1,100 peticiones
+  const limit_unique_cities = 1100;
+  var limit_counter = 0;
 
   // Leemos los datos
-  fs.createReadStream('./resources/datosModelado1.csv').pipe(csv())
+  fs.createReadStream(data).pipe(csv())
     .on('data', (row) => {
       // Vamos a ver que tipo de base de datos nos están pasando (Tipo 1 y Tipo 2)
 
-      if(((row.origin && isAlpha(row.origin)) || (row.origin_latitude && row.origin_longitude)) && ((row.destination && isAlpha(row.destination)) || (row.destination_latitude && row.destination_longitude))   ){
+      if(((row.origin && isAlpha(row.origin)) || (row.origin_latitude && row.origin_longitude)) && ((row.destination && isAlpha(row.destination)) || (row.destination_latitude && row.destination_longitude))  && (limit_counter < limit_unique_cities) ){
       // CASO BASE DE DATOS 1 (origin	destination	origin_latitude	origin_longitude	destination_latitude	destination_longitude)
             // Obtenemos la información únicamente del destino (porque es lo nos importa)
             ticket = {}
@@ -56,49 +82,113 @@ const weatherEndpoint = async(req, res)=>{
             // Agregar a un diccionario (si se se repite, no se agrega) VALORES ÚNICOS (((Considerar 2 posibles tipos database)))
             if(!(key in unique_tickets)){
               unique_tickets[key] = ticket;
+              limit_counter++;
             }
             // Agregar a lista (con todo y repeticiones ) TODOS LOS TICKETS
             tickets.push(row);
             // Aumentamos el contador
             counter++;
       }
-      else if(row.destino && isAlpha(row.destino)){
+      else if(row.destino && isAlpha(row.destino) && (limit_counter < limit_unique_cities)){
       // CASO BASE DE DATOS 2 (destino	salida	llegada	fecha de salida)
             // String del destino para que sea la clave
             var key = normalizar(row.destino);
             // Agregar a un diccionario (si se se repite, no se agrega) VALORES ÚNICOS (((Considerar 2 posibles tipos database)))
             if(!(key in unique_tickets)){
               unique_tickets[key] = key;
+              limit_counter++;
             }
             // Agregar a lista (con todo y repeticiones ) TODOS LOS TICKETS
             tickets.push(key);
             // Aumentamos el contador
             counter++;
-      }else{
-        console.log("Error leyendo: "+JSON.stringify(row));
+      }else if(limit_counter < limit_unique_cities){
+        console.log("Error leyendo: \n"+JSON.stringify(row));
         // Esto significa que se encontró un boleto con información equivocada
-        error_tickets.push(counter); // Para decirle al usuario "Tu boleto en esta posición # está mal, o tu boleto número # está mal"
+        error_tickets++; // Para decirle al usuario "Tu boleto en esta posición # está mal, o tu boleto número # está mal"
         counter++;
       }
     })
     .on('end', () => {
-            console.log("Tenemos "+Object.keys(unique_tickets).length+" vuelos");
+            console.log("--------------------------------------");
+            console.log("Tenemos "+Object.keys(unique_tickets).length+" vuelos a distintos lugares");
             console.log("Tenemos "+tickets.length+" boletos");
-            console.log("Tenemos "+error_tickets.length+" boletos sin destino o sin origen (erróneos)")
+            console.log("Tenemos "+error_tickets+" boletos sin destino o sin origen (erróneos)");
             // Llamar método de core para hacer las peticiones a la API de lo que tengamos en el diccionario
             // Observación: unique_tickets ya tiene las claves ÚNICAS dentro de la base de datos. I.E. es nuestro Caché
-            weather_values = Algorithms.get_weather_status(unique_tickets);
+            Algorithms.get_weather_status(unique_tickets).then(weathers => generate_report(weathers, tickets, res)).catch(err =>{});
             // Método para concatenar climas y lugares y generar un JSON que se enviará al usuario
-
-            //-------------------------------------------------
-            // Mandamos a llamar a un método que concatene climas con boletos (respuesta)
-            //-------------------------------------------------
+            console.log("--------------------------------------");
             // Si tenemos un ticket cuyo destino (clave) no está en las clavesIATAmex, entonces concatenamos su latitude+longitude y usamos ese como clave para obtener el resultado
-            // Para obtener la respuesta, tomamos clavesIATAmex[destintation] y la utilizamos como llave para obtener la respuesta
-            res.status(201).send(weather_values);
   });
   return;
 };
+
+// Función que realiza el etiquetado  weathers: diccionario con los climas,   tickets: lista con los tickets
+const generate_report = (weathers, tickets, res)=>{
+  var listaRenglones = [];
+  var columnaData = {};
+  var destination;
+  var achieved_requests  = 0;
+  var failed_requests = 0;
+  for(var i = 0; i < tickets.length; i++){
+    if(tickets[i].destination || (tickets[i].destination_latitude && tickets[i].destination_latitude)){
+        destination = (tickets[i].destination in clavesIATAmex) ? clavesIATAmex[tickets[i].destination] : tickets[i].destination_latitude+tickets[i].destination_longitude;
+        clima = weathers[destination];
+        if(clima != undefined){
+          columnaData["Número de Ticket"] = i;
+          columnaData["Status"] = "Petición completada";
+          columnaData["Destino"] = destination;
+          columnaData["Humedad"] = clima["humidity"];
+          columnaData["Temperatura"] = clima["temp"];
+          columnaData["Temperatura Minima"] = clima["temp_min"];
+          columnaData["Temperatura Máxima"] = clima["temp_max"];
+          columnaData["Presión Atmosférica"] = clima["humidity"];
+          achieved_requests++;
+        }else{
+          columnaData["Número de Ticket"] = i;
+          columnaData["Status"] = "Petición no completada";
+          columnaData["Destino"] = destination;
+          failed_requests++;
+        }
+        listaRenglones.push(columnaData);
+        columnaData = {};
+    }else if(tickets[i] != undefined){
+        destination = tickets[i];
+        clima = weathers[destination];
+        if(clima != undefined){
+          columnaData["Número de Ticket"] = i;
+          columnaData["Status"] = "Petición completada";
+          columnaData["Destino"] = destination;
+          columnaData["Humedad"] = clima["humidity"];
+          columnaData["Temperatura"] = clima["temp"];
+          columnaData["Temperatura Minima"] = clima["temp_min"];
+          columnaData["Temperatura Máxima"] = clima["temp_max"];
+          columnaData["Presión Atmosférica"] = clima["humidity"];
+          achieved_requests++;
+        }else{
+          columnaData["Status"] = "Petición no completada";
+          columnaData["Número de Ticket"] = i;
+          columnaData["Destino"] = destination;
+          failed_requests++;
+        }
+        listaRenglones.push(columnaData);
+        columnaData = {};
+    }
+  }
+  console.log("--------------------------------------");
+  console.log("\nNúmero de peticiones no reconocidas por OpenWeather: "+failed_requests);
+  console.log("Número de boletos que tienen el clima: "+achieved_requests);
+  console.log("Número total de peticiones realizadas por el sistema: "+Object.keys(weathers).length);
+  console.log("\n--------------------------------------");
+  convert_to_csv(listaRenglones, "ClimasTicketsRespuesta.csv");
+  // Guardamos la fecha en la que se realizó la última conexión a los microservidores
+  write_file(file, Date.now());
+  // Sending the data back
+  res.setHeader('Content-Type', 'application/json');
+  res.status(201).send(listaRenglones);
+}
+
 
 // Exportar la función
 module.exports.weatherEndpoint = weatherEndpoint;

@@ -23,17 +23,8 @@ const worker = async function(segments){
 
   // Vamos a obtener los resultados de las promesas de los hilos
   return  Promise.all(promises).then(results => {
-    // Aquí tendríamos las respuestas de los climas para cada segmento de la partición 1
-    // Necesitamos juntar cuatro jsons en uno solo (results es un arreglo de jsons)
-    data = {};
-    // Agregamos todas las respuestas de los hilos a un solo json
-    for(var i = 0; i < results.length; i++){
-      for(var key in results[i]){
-        data[key] = results[i][key];
-      }
-    }
-    return data;
+    return results;
   });
 };
 
-module.exports.worker = worker; 
+module.exports.worker = worker;

@@ -1,0 +1,47 @@
+nav{
+  display: flex;
+  align-items: center;
+  position: absolute;
+  margin-left: 200px;
+  margin-top: 20px;
+}
+
+h2{
+  color:white;
+  margin-left: 20px;
+}
+
+form{
+  margin-left: 100px;
+  color: white;
+  font-weight: bold;
+}
+
+div{
+  width: 400px;
+  height: 500px;
+  border: 1px solid #c3c3c3;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  background-color: #4252D4;
+}
+
+.instrucciones{
+  margin-left: 10px;
+  font-size: 20px;
+}
+
+.form{
+  font-size: 15px;
+  display:flex;
+}
+
+h3{
+  color: #4BF5AB;
+  align-items: center;
+}
+
+p{
+  color: red;
+}

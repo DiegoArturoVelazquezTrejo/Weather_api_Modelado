@@ -1,8 +1,6 @@
-const os = require('os');
-// Contamos los CPUs de la máquina
-const userCPUCount = os.cpus().length;
-
 // Documento para los algoritmos auxiliares o frecuentemente utilizados
+const converter = require('json-2-csv');
+const fs = require('fs');
 
 // Función para verificar que las claves de las ciudades tengan únicamente caracteres alfabéticos
 const isAlpha = function(ch){
@@ -10,11 +8,13 @@ const isAlpha = function(ch){
 }
 
 // Función para particionar los datos de acuerdo a la cantidad de CPUs (para los hilos)
-const partition_data = function(data_to_be_resolved){
+const partition_data = function(data_to_be_resolved, servers){
   // sub sub partición que la información que cada hilo va a procesar
-  const segmentSize = Math.ceil(Object.keys(data_to_be_resolved).length)/userCPUCount;
-  contador = 0;
+  const segmentSize = 55;
+  let contador = 0;
+  let counter = 0;
   let data = {};
+  let data_server = {};
   const segments = [];
   // Hacemos un arreglo con particiones de datos para cada worker (hilo)
   for(var key in data_to_be_resolved){
@@ -22,30 +22,71 @@ const partition_data = function(data_to_be_resolved){
       data[key] = data_to_be_resolved[key];
       contador++;
     }else{
-      segments.push(data);
+      data_server["data"] = data;
+      data_server["server"] = servers[counter];
+      segments.push(data_server);
       contador = 1;
+      counter++;
       data = {};
+      data_server = {};
       data[key] = data_to_be_resolved[key];
     }
   }
   if(Object.keys(data).length >0){
-    segments.push(data);
+    data_server["data"] = data;
+    data_server["server"] = servers[counter];
+    segments.push(data_server);
   }
   return segments;
 }
 
+// Función que normaliza las cadenas
+const normalizar = (texto) => {
+  var str = texto.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  return str.replace(/[^\w\s]/gi, '');
+}
+
 // Función para sleep en Javascript
-function sleep(ms) {
+const sleep =(ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Función que normaliza las cadenas
-function normalizar(texto) {
-    var str = texto.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase();
-    return str.replace(/[^\w\s]/gi, '');
+
+// Función que genera un csv de cuerdo a un json
+const convert_to_csv = (lista, nombre_archivo) =>{
+  converter.json2csv(lista, (err, csv) => {
+    if (err) {
+        throw err;
+    }
+    // write CSV to a file
+    fs.writeFileSync(nombre_archivo, csv);
+  });
+}
+
+// Función para escribir en un archivo de texto
+const write_file = (file, message) =>{
+  fs.writeFile(file, message, function(err) {
+    if (err) {
+      return console.log(err);
+    }
+  });
+}
+
+// Función para leer el contenido de un archivo
+const read_file = (file) =>{
+  fs.readFile(file, 'utf8', function(err, data) {
+  if (err) {
+    return console.log(err);
+  }
+  console.log("Data: "+data);
+  return data;
+  });
 }
 
 module.exports.isAlpha = isAlpha;
 module.exports.partition_data = partition_data;
 module.exports.sleep = sleep;
 module.exports.normalizar = normalizar;
+module.exports.convert_to_csv = convert_to_csv;
+module.exports.write_file = write_file;
+module.exports.read_file = read_file;

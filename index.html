@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Generador de Reportes del Clima</title>
+    <link rel="stylesheet" href="./html/style.css">
+  </head>
+  <body>
+    <h1>Generador de Reportes del Clima</h1>
+    <nav class="main">
+      <div class="instrucciones">
+        <h2>Instrucciones de uso:</h2>
+        <h3>1. Coloca la base de datos dentro de la carpeta del proyecto</h3>
+        <h3>2. Ingresa el nombre de la base de datos tal cual la tienes escrita (sin extensión)</h3>
+        <h3>3. La base de datos tiene que ser un archivo de tipo ".csv"</h3>
+      </div>
+      <div class="form">
+        <form action="http://localhost:2727/subirNombreCSV" method="post">
+          <label for="fname">Nombre de la base de datos: </label>
+          <br />
+          <input type="text" id="csvname" name="csvname"><br><br>
+          <input type="submit" value="Submit">
+        </form>
+      </div>
+    </nav>
+  </body>
+</html>
