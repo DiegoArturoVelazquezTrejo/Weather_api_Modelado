@@ -21,7 +21,17 @@ const file = "./resources/.apicall.txt";
 
 // Este el el archivo que contiene los endpoints
 const weatherEndpoint = async(req, res)=>{
-
+  // Verificamos que se ingrese el nombre del archivo 
+  if(!req.body.csvname){
+    res.status(404).send({status:"Archivo no ingresado"});
+    return;
+  }
+  var data = req.body.csvname + ".csv";
+  // Open a log file
+  if(!fs.existsSync(data)){
+    res.status(404).send({status:"Archivo "+data+" no encontrado"});
+    return;
+  }
   // Antes de comenzar a analizar un bloque de datos, vamos a ver cuanto tiempo ha pasado desde que se hizo la última petición a los microservidores:
   fs.readFile(file, 'utf8', async function(err, data) {
     if (err) {
@@ -46,7 +56,7 @@ const weatherEndpoint = async(req, res)=>{
   var limit_counter = 0;
 
   // Leemos los datos
-  fs.createReadStream('./resources/datosModelado1.csv').pipe(csv())
+  fs.createReadStream(data).pipe(csv())
     .on('data', (row) => {
       // Vamos a ver que tipo de base de datos nos están pasando (Tipo 1 y Tipo 2)
 
