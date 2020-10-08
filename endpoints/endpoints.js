@@ -31,7 +31,7 @@ const weatherEndpoint = async(req, res)=>{
   var limit_counter = 0;
 
   // Leemos los datos
-  fs.createReadStream('./resources/datosModelado1.csv').pipe(csv())
+  fs.createReadStream('./resources/datosModelado2.csv').pipe(csv())
     .on('data', (row) => {
       // Vamos a ver que tipo de base de datos nos están pasando (Tipo 1 y Tipo 2)
 
@@ -153,7 +153,7 @@ const generate_report = (weathers, tickets, res)=>{
   }
   console.log("--------------------------------------");
   console.log("\nNúmero de peticiones no reconocidas por OpenWeather: "+failed_requests);
-  console.log("Número de peticiones reconocidas por OpenWeather: "+achieved_requests);
+  console.log("Número de boletos que tienen el clima: "+achieved_requests);
   console.log("Número total de peticiones realizadas por el sistema: "+Object.keys(weathers).length);
   console.log("\n--------------------------------------");
   convert_to_csv(listaRenglones, "respuesta.csv");

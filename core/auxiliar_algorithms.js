@@ -1,6 +1,6 @@
 // Documento para los algoritmos auxiliares o frecuentemente utilizados
 const converter = require('json-2-csv');
-const fs = require('fs'); 
+const fs = require('fs');
 
 // Función para verificar que las claves de las ciudades tengan únicamente caracteres alfabéticos
 const isAlpha = function(ch){
@@ -40,19 +40,20 @@ const partition_data = function(data_to_be_resolved, servers){
   return segments;
 }
 
+// Función que normaliza las cadenas
+const normalizar = (texto) => {
+  var str = texto.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  return str.replace(/[^\w\s]/gi, '');
+}
+
 // Función para sleep en Javascript
-function sleep(ms) {
+const sleep =(ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Función que normaliza las cadenas
-function normalizar(texto) {
-    var str = texto.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase();
-    return str.replace(/[^\w\s]/gi, '');
-}
 
 // Función que genera un csv de cuerdo a un json
-function convert_to_csv(lista, nombre_archivo){
+const convert_to_csv = (lista, nombre_archivo) =>{
   converter.json2csv(lista, (err, csv) => {
     if (err) {
         throw err;
