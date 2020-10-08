@@ -5,6 +5,7 @@ const serversData = require('../resources/servidores.js');
 const servers = serversData.servers;
 const isAlpha = functions.isAlpha;
 const normalizar = functions.normalizar;
+
 // Datos que utilizaremos para las pruebas
 const data = {
   canada: 'canada',
@@ -393,3 +394,7 @@ const partition_data_test = (data, servers) =>{
 partition_data_test(data, servers);
 prueba_is_alpha();
 prueba_normalizar();
+const read_file = functions.read_file;
+const write_file = functions.write_file;
+write_file("hola.txt", Date.now());
+write_file("hola.txt", Date.now());

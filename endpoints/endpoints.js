@@ -13,10 +13,25 @@ const functions = require('../core/auxiliar_algorithms.js');
 const isAlpha = functions.isAlpha;
 const normalizar = functions.normalizar;
 const convert_to_csv = functions.convert_to_csv;
+const write_file = functions.write_file;
+const sleep = functions.sleep;
+
+// Arhchivo que contiene la última llamada al servidor
+const file = "./resources/.apicall.txt";
 
 // Este el el archivo que contiene los endpoints
 const weatherEndpoint = async(req, res)=>{
 
+  // Antes de comenzar a analizar un bloque de datos, vamos a ver cuanto tiempo ha pasado desde que se hizo la última petición a los microservidores:
+  fs.readFile(file, 'utf8', async function(err, data) {
+    if (err) {
+      return console.log(err);
+    }
+    var last_call = parseInt(data);
+    if((Date.now() - last_call) < 60000){
+      await sleep(60000 - (Date.now() - last_call));
+    }
+  });
   // Verificar que los parámetros sean los que necesitamos
   // Declaramos las estructuras de datos
   const unique_tickets = {};
@@ -31,7 +46,7 @@ const weatherEndpoint = async(req, res)=>{
   var limit_counter = 0;
 
   // Leemos los datos
-  fs.createReadStream('./resources/datosModelado2.csv').pipe(csv())
+  fs.createReadStream('./resources/datosModelado1.csv').pipe(csv())
     .on('data', (row) => {
       // Vamos a ver que tipo de base de datos nos están pasando (Tipo 1 y Tipo 2)
 
@@ -91,7 +106,7 @@ const weatherEndpoint = async(req, res)=>{
             console.log("Tenemos "+error_tickets+" boletos sin destino o sin origen (erróneos)");
             // Llamar método de core para hacer las peticiones a la API de lo que tengamos en el diccionario
             // Observación: unique_tickets ya tiene las claves ÚNICAS dentro de la base de datos. I.E. es nuestro Caché
-            Algorithms.get_weather_status(unique_tickets).then(weathers => generate_report(weathers, tickets, res));
+            Algorithms.get_weather_status(unique_tickets).then(weathers => generate_report(weathers, tickets, res)).catch(err =>{});
             // Método para concatenar climas y lugares y generar un JSON que se enviará al usuario
             console.log("--------------------------------------");
             // Si tenemos un ticket cuyo destino (clave) no está en las clavesIATAmex, entonces concatenamos su latitude+longitude y usamos ese como clave para obtener el resultado
@@ -156,10 +171,12 @@ const generate_report = (weathers, tickets, res)=>{
   console.log("Número de boletos que tienen el clima: "+achieved_requests);
   console.log("Número total de peticiones realizadas por el sistema: "+Object.keys(weathers).length);
   console.log("\n--------------------------------------");
-  convert_to_csv(listaRenglones, "respuesta.csv");
+  convert_to_csv(listaRenglones, "ClimasTicketsRespuesta.csv");
+  // Guardamos la fecha en la que se realizó la última conexión a los microservidores
+  write_file(file, Date.now());
   // Sending the data back
   res.setHeader('Content-Type', 'application/json');
-  res.status(201).send(weathers);
+  res.status(201).send(listaRenglones);
 }
 
 

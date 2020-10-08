@@ -63,8 +63,30 @@ const convert_to_csv = (lista, nombre_archivo) =>{
   });
 }
 
+// Función para escribir en un archivo de texto
+const write_file = (file, message) =>{
+  fs.writeFile(file, message, function(err) {
+    if (err) {
+      return console.log(err);
+    }
+  });
+}
+
+// Función para leer el contenido de un archivo
+const read_file = (file) =>{
+  fs.readFile(file, 'utf8', function(err, data) {
+  if (err) {
+    return console.log(err);
+  }
+  console.log("Data: "+data);
+  return data;
+  });
+}
+
 module.exports.isAlpha = isAlpha;
 module.exports.partition_data = partition_data;
 module.exports.sleep = sleep;
 module.exports.normalizar = normalizar;
 module.exports.convert_to_csv = convert_to_csv;
+module.exports.write_file = write_file;
+module.exports.read_file = read_file;
